@@ -3,7 +3,7 @@
 require_once '../classes/customer_class.php';
 
 
-function register_customer_ctr($name, $email, $hashedPassword, $country, $city, $contact, $role = 1, $image = null)
+function register_customer_ctr($name, $email, $hashedPassword, $country, $city, $contact, $role = 2, $image = null)
 {
     $cust = new Customer();
     return $cust->addCustomer($name, $email, $hashedPassword, $country, $city, $contact, $role, $image);

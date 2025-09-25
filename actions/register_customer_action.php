@@ -33,7 +33,7 @@ $city = htmlspecialchars($raw('city'));
 $fullPhone = htmlspecialchars($raw('full_phone_e164'));
 $countryCode = htmlspecialchars($raw('country_code'));
 $phoneLocal = htmlspecialchars($raw('phone_number'));
-$role = isset($_POST['role']) ? (int) $_POST['role'] : 1;
+$role = isset($_POST['role']) ? (int) $_POST['role'] : 2;
 
 if ($name === '' || $email === '' || $password === '' || $confirmPassword === '' || $country === '' || $city === '') {
     respond('error', 'Please fill all required fields (name, email, password, country, city).');

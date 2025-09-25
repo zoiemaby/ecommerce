@@ -45,7 +45,7 @@ class Customer extends Database
     }
 
 
-    public function addCustomer($name, $email, $hashedPassword, $country, $city, $contact, $role = 1, $image = null)
+    public function addCustomer($name, $email, $hashedPassword, $country, $city, $contact, $role = 2, $image = null)
     {
         if ($this->emailExists($email)) {
             return false;

@@ -243,11 +243,11 @@ label {
         <label class="form-label">Register As</label>
         <div class="radio-group">
             <div class="custom-radio">
-                <input class="form-check-input" type="radio" name="role" id="customer" value="1" checked>
+        <input class="form-check-input" type="radio" name="role" id="customer" value="2">
                 <label class="form-check-label" for="customer">Customer</label>
             </div>
             <div class="custom-radio">
-                <input class="form-check-input" type="radio" name="role" id="owner" value="2">
+        <input class="form-check-input" type="radio" name="role" id="owner" value="1" checked>
                 <label class="form-check-label" for="owner">Restaurant Owner</label>
             </div>
         </div>
