@@ -290,4 +290,11 @@ class Customer extends Database
     return false;
     }
 }
-
+if (!function_exists('ensure_session')) {
+    function ensure_session()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+}

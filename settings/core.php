@@ -1,6 +1,27 @@
 <?php
 
 
+// Ensure session is started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+function isLoggedIn(){
+    if (!isset($_SESSION['user_id'])) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
+function isAdmin(){
+    if (isLoggedIn()) {
+        return $_SESSION['user_role'] == 2;
+    }
+}
+
+
 if (!function_exists('ensure_session')) {
     function ensure_session()
     {
@@ -64,25 +85,4 @@ if (!function_exists('post')) {
     {
         return isset($_POST[$key]) ? s($_POST[$key]) : $default;
     }
-}
-
-// Ensure session is started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-/**
- * Check if user is logged in
- * @return bool
- */
-function isLoggedIn() {
-    return isset($_SESSION['user_id']);
-}
-
-/**
- * Check if user has administrative privileges
- * @return bool
- */
-function isAdmin() {
-    return (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 }
