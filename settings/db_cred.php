@@ -1,29 +1,10 @@
-
-
 <?php
-//Database credentials
-// Settings/db_cred.php
 
-// define('DB_HOST', 'localhost');
-// define('DB_USER', 'root');
-// define('DB_PASS', '');
-// define('DB_NAME', 'dbforlab');
-
-
-if (!defined("SERVER")) {
-    define("SERVER", "localhost");
+if (!defined('DB_HOST')) {
+    define('DB_HOST', 'localhost'); // Add this line
+    define('DB_USER', 'root');
+    define('DB_PASS', ''); // empty if no password for root locally
+    define('DB_NAME', 'dbforlab'); // your database name from the SQL dump
 }
 
-if (!defined("USERNAME")) {
-    define("USERNAME", "root");
-}
-
-if (!defined("PASSWD")) {
-    define("PASSWD", "");
-}
-
-if (!defined("DATABASE")) {
-    // Use the database name from the provided SQL dump
-    define("DATABASE", "dbforlab");
-}
 ?>

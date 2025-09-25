@@ -20,7 +20,7 @@
                 <a href="#">About</a>
                 <a href="#">Info</a>
                 <a href="view/register.php">Sign Up</a>
-                <a href="view/login_user.php">Login</a>
+                <a href="view/login.php">Login</a>
                
             </div>
             <label for="check">

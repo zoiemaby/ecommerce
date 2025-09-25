@@ -179,7 +179,7 @@ label {
 </head>
 <body>
   <div class="wrapper">
-    <form id="signUpForm" action="../actions/register.php" method="post" novalidate>
+    <form id="signUpForm" action="../actions/register_customer_action.php" method="post" novalidate>
       <h1>Sign Up</h1>
 
       <!-- Single Name field -->
@@ -256,12 +256,12 @@ label {
       <button type="submit" class="btn">Sign Up</button>
 
       <div class="register-link">
-        <p>Already have an account? <a href="login_user.php">Login</a></p>
+        <p>Already have an account? <a href="login.php">Login</a></p>
       </div>
     </form>
   </div>
 
-  <!-- JS dependencies -->
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
