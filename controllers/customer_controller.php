@@ -53,3 +53,5 @@ function customer_email_exists_ctr($email)
     $cust = new Customer();
     return $cust->emailExists($email);
 }
+
+?>

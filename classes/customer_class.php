@@ -10,7 +10,7 @@ class Customer extends Database
         parent::__construct();
 
         if (isset($this->conn) && $this->conn instanceof mysqli) {
-            $this->conn = $this->conn; 
+            $this->conn = $this->conn;
         } else {
             if (method_exists($this, 'getConnection')) {
                 $this->conn = $this->getConnection();
@@ -24,7 +24,8 @@ class Customer extends Database
             }
         }
     }
-        public function emailExists($email)
+
+    public function emailExists($email)
     {
         $sql = 'SELECT customer_id FROM customer WHERE customer_email = ? LIMIT 1';
         $stmt = $this->conn->prepare($sql);
@@ -43,7 +44,6 @@ class Customer extends Database
         $stmt->close();
         return $exists;
     }
-
 
     public function addCustomer($name, $email, $hashedPassword, $country, $city, $contact, $role = 2, $image = null)
     {
@@ -70,54 +70,54 @@ class Customer extends Database
             return false;
         }
     }
+
     public function loginCustomer($email, $password)
     {
-    // Sanity check
-    if (empty($email) || empty($password)) {
-        return false;
+        // Sanity check
+        if (empty($email) || empty($password)) {
+            return false;
+        }
+
+        // Fetch the customer row by email
+        $sql = "SELECT customer_id, customer_name, customer_email, customer_pass, 
+                       customer_country, customer_city, customer_contact, 
+                       customer_image, user_role
+                FROM customer 
+                WHERE customer_email = ?";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            error_log('loginCustomer prepare failed: ' . $this->conn->error);
+            return false;
+        }
+
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$user) {
+            // No such email
+            return false;
+        }
+
+        // Verify password against the stored hash
+        if (!password_verify($password, $user['customer_pass'])) {
+            return false;
+        }
+
+        // Optional: set session variables
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['user_id']    = $user['customer_id'];
+        $_SESSION['user_email'] = $user['customer_email'];
+        $_SESSION['user_name']  = $user['customer_name'];
+        $_SESSION['user_role']  = $user['user_role'];
+        $_SESSION['user_image'] = $user['customer_image'];
+
+        return $user; // return user data on success
     }
-
-    // Fetch the customer row by email
-    $sql = "SELECT customer_id, customer_name, customer_email, customer_pass, 
-                   customer_country, customer_city, customer_contact, 
-                   customer_image, user_role
-            FROM customer 
-            WHERE customer_email = ?";
-    $stmt = $this->conn->prepare($sql);
-    if (!$stmt) {
-        error_log('loginCustomer prepare failed: ' . $this->conn->error);
-        return false;
-    }
-
-    $stmt->bind_param('s', $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
-
-    if (!$user) {
-        // No such email
-        return false;
-    }
-
-    // Verify password against the stored hash
-    if (!password_verify($password, $user['customer_pass'])) {
-        return false;
-    }
-
-    // Optional: set session variables
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    $_SESSION['user_id']    = $user['customer_id'];
-    $_SESSION['user_email'] = $user['customer_email'];
-    $_SESSION['user_name']  = $user['customer_name'];
-    $_SESSION['user_role']  = $user['user_role'];
-    $_SESSION['user_image'] = $user['customer_image'];
-
-    return $user; // return user data on success
-}
-
 
     public function editCustomer($id, array $fieldsArray)
     {
@@ -148,6 +148,8 @@ class Customer extends Database
         $types .= 'i';
         $values[] = (int)$id;
 
+        // initialize bind array to avoid warnings
+        $bind_names = [];
         $bind_names[] = $types;
         for ($i = 0; $i < count($values); $i++) {
             $bind_name = 'bind' . $i;
@@ -177,7 +179,6 @@ class Customer extends Database
         $stmt->close();
         return (bool)$res;
     }
-
 
     public function getCustomerByEmail($email)
     {
@@ -240,61 +241,55 @@ class Customer extends Database
         return $rows;
     }
 
-
     public function authenticateCustomer($email, $password)
     {
-    // Sanity
-    if (empty($email) || empty($password)) {
-        return false;
-    }
+        // Sanity
+        if (empty($email) || empty($password)) {
+            return false;
+        }
 
-    // Use existing helper to fetch the full customer row
-    $row = $this->getCustomerByEmail($email);
-    if (empty($row)) {
-        // no such user
-        return false;
-    }
+        // Use existing helper to fetch the full customer row
+        $row = $this->getCustomerByEmail($email);
+        if (empty($row)) {
+            // no such user
+            return false;
+        }
 
-    // Expect DB column name customer_pass (per your add/edit methods)
-    $stored = isset($row['customer_pass']) ? $row['customer_pass'] : null;
-    if (empty($stored)) {
-        // no password stored for this user - treat as auth failure
-        error_log("authenticateCustomer: no password stored for email {$email}");
-        return false;
-    }
+        // Expect DB column name customer_pass (per your add/edit methods)
+        $stored = isset($row['customer_pass']) ? $row['customer_pass'] : null;
+        if (empty($stored)) {
+            // no password stored for this user - treat as auth failure
+            error_log("authenticateCustomer: no password stored for email {$email}");
+            return false;
+        }
 
-   
-    // Fallback: some installations might have legacy plaintext passwords.
-    // We try a direct comparison *only if* password_verify failed. If you do
-    // not have plaintext passwords in DB, remove this block.
-    if (hash_equals($stored, $password)) {
-        // Immediately upgrade to hashed password in DB for security
-        try {
-            $newHash = password_hash($password, PASSWORD_DEFAULT);
-            $updateSql = 'UPDATE customer SET customer_pass = ? WHERE customer_id = ?';
-            $stmt = $this->conn->prepare($updateSql);
-            if ($stmt) {
-                $stmt->bind_param('si', $newHash, $row['customer_id']);
-                $stmt->execute();
-                $stmt->close();
+        // Fallback: some installations might have legacy plaintext passwords.
+        // We try a direct comparison *only if* password_verify failed. If you do
+        // not have plaintext passwords in DB, remove this block.
+        if (hash_equals($stored, $password)) {
+            // Immediately upgrade to hashed password in DB for security
+            try {
+                $newHash = password_hash($password, PASSWORD_DEFAULT);
+                $updateSql = 'UPDATE customer SET customer_pass = ? WHERE customer_id = ?';
+                $stmt = $this->conn->prepare($updateSql);
+                if ($stmt) {
+                    $stmt->bind_param('si', $newHash, $row['customer_id']);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+            } catch (Throwable $e) {
+                error_log('authenticateCustomer: failed to upgrade plaintext password: ' . $e->getMessage());
             }
-        } catch (Throwable $e) {
-            error_log('authenticateCustomer: failed to upgrade plaintext password: ' . $e->getMessage());
+
+            unset($row['customer_pass']);
+            return $row;
         }
 
-        unset($row['customer_pass']);
-        return $row;
+        // Not verified
+        return false;
     }
 
-    // Not verified
-    return false;
-    }
+    
+    
 }
-if (!function_exists('ensure_session')) {
-    function ensure_session()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-    }
-}
+?>
