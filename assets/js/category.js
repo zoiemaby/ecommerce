@@ -140,6 +140,7 @@ Usage examples (at bottom) show how to bind forms/buttons.
         if (res.json.success) {
           showToast(res.json.message || 'Category added', 'success');
           if (onSuccess) onSuccess(res.json);
+          fetchCategories(); // refresh category list
           return res.json;
         } else {
           const msg = res.json.message || 'Failed to add category.';
