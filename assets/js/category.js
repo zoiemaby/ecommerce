@@ -172,7 +172,7 @@ Usage examples (at bottom) show how to bind forms/buttons.
     if (limit) params.set('limit', String(limit));
     if (offset) params.set('offset', String(offset));
     if (q) params.set('q', q);
-    const url = '/actions/fetch_category_action.php?' + params.toString();
+    const url = '../actions/fetch_category_action.php?' + params.toString();
 
     try {
       const res = await doFetch(url, { method: 'GET' });
@@ -222,7 +222,7 @@ Usage examples (at bottom) show how to bind forms/buttons.
     form.append('category_name', v.value);
 
     try {
-      const res = await doFetch('/actions/update_category_action.php', { method: 'POST', body: form });
+      const res = await doFetch('../actions/update_category_action.php', { method: 'POST', body: form });
       if (res.json) {
         if (res.json.success) {
           showToast(res.json.message || 'Category updated', 'success');
@@ -263,7 +263,7 @@ Usage examples (at bottom) show how to bind forms/buttons.
     form.append('category_id', String(vId.value));
 
     try {
-      const res = await doFetch('/actions/delete_category_action.php', { method: 'POST', body: form });
+      const res = await doFetch('../actions/delete_category_action.php', { method: 'POST', body: form });
 
       if (res.json) {
         if (res.json.success) {
