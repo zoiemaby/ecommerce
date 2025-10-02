@@ -130,7 +130,7 @@ Usage examples (at bottom) show how to bind forms/buttons.
     form.append('category_name', v.value);
 
     try {
-      const res = await doFetch('/actions/add_category_action.php', {
+      const res = await doFetch('../actions/add_category_action.php', {
         method: 'POST',
         body: form,
       });

@@ -239,7 +239,7 @@ require_once '../controllers/category_controller.php';
     <div class="app">
       <!-- Top bar -->
       <div class="topbar">
-        <a href="dashboard.php" class="back-btn" aria-label="Back to dashboard">
+        <a href="index.php" class="back-btn" aria-label="Back to dashboard">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -274,21 +274,26 @@ require_once '../controllers/category_controller.php';
 
             <?php
             // Handle create
-      if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
-        $name = trim($_POST['category_name']);
-        $errors = [];
-        if ($name === '') {
-          $errors[] = 'Category name required.';
-        } elseif (category_name_exists_ctr($name)) {
-          $errors[] = 'Category name must be unique.';
-        }
-        if (empty($errors)) {
-          add_category_ctr($name);
-          echo '<script>window.location.reload();</script>';
-        } else {
-          echo '<div class="error-message">'.implode('<br>', array_map('htmlspecialchars', $errors)).'</div>';
-        }
-      }
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
+                $name = trim($_POST['category_name']);
+                $errors = [];
+                if ($name === '') {
+                    $errors[] = 'Category name required.';
+                } elseif (category_name_exists_ctr($name)) {
+                    $errors[] = 'Category name must be unique.';
+                }
+                if (empty($errors)) {
+                    $result = add_category_ctr($name);
+                    if ($result === false) {
+                        $errors[] = 'Failed to add category. Check database connection, table structure, and error logs.';
+                        echo '<div class="error-message">'.implode('<br>', array_map('htmlspecialchars', $errors)).'</div>';
+                    } else {
+                        echo '<script>window.location.reload();</script>';
+                    }
+                } else {
+                    echo '<div class="error-message">'.implode('<br>', array_map('htmlspecialchars', $errors)).'</div>';
+                }
+            }
             ?>
 
             <input
