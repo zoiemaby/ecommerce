@@ -118,178 +118,118 @@ Usage examples (at bottom) show how to bind forms/buttons.
   }
 
   // ------------------ API Actions ------------------
-  async function addCategory({ name, onSuccess, onError }) {
+  // Helper to update the category list in the DOM
+  async function refreshCategoryList() {
+    // You may need to adjust this selector and rendering logic to match your HTML
+    const container = document.querySelector('.user-list');
+    if (!container) return;
+    try {
+      const res = await doFetch('../actions/fetch_category_action.php', { method: 'GET' });
+      if (res.json && Array.isArray(res.json.data)) {
+        container.innerHTML = '';
+        res.json.data.forEach(cat => {
+          const div = document.createElement('div');
+          div.className = 'user-item';
+          div.innerHTML = `
+            <div class="user-details">
+              <p><strong>ID:</strong> ${cat.cat_id}</p>
+              <p class="small"><strong>Name:</strong> ${cat.cat_name}</p>
+            </div>
+            <div class="user-actions">
+              <button class="action-button secondary" data-action="delete-category" data-id="${cat.cat_id}" title="Delete">Delete</button>
+              <form class="edit-category-form" style="display:inline;">
+                <input type="hidden" name="category_id" value="${cat.cat_id}">
+                <input type="text" name="category_name" value="${cat.cat_name}" required>
+                <button class="action-button" type="submit" title="Update">Update</button>
+              </form>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+    } catch (e) {
+      showToast('Failed to refresh category list', 'error');
+    }
+  }
+
+  async function addCategory({ name, formEl }) {
     const v = validateCategoryName(name);
     if (!v.ok) {
       showToast(v.reason, 'error');
-      if (onError) onError(v.reason);
       return false;
     }
-
     const form = new FormData();
     form.append('category_name', v.value);
-
     try {
       const res = await doFetch('../actions/add_category_action.php', {
         method: 'POST',
         body: form,
       });
-
-      // Prefer JSON success message
-      if (res.json) {
-        if (res.json.success) {
-          showToast(res.json.message || 'Category added', 'success');
-          if (onSuccess) onSuccess(res.json);
-          fetchCategories(); // refresh category list
-          return res.json;
-        } else {
-          const msg = res.json.message || 'Failed to add category.';
-          showToast(msg, 'error');
-          if (onError) onError(res.json);
-          return res.json;
-        }
-      }
-
-      // fallback based on HTTP status
-      if (res.ok) {
-        showToast('Category added', 'success');
-        if (onSuccess) onSuccess(res);
+      if (res.json && res.json.status === 'success') {
+        showToast(res.json.message || 'Category added', 'success');
+        if (formEl) formEl.reset();
+        await refreshCategoryList();
         return true;
       } else {
-        showToast(' category', 'error');
-        if (onError) onError(res);
+        showToast((res.json && res.json.message) || 'Failed to add category.', 'error');
         return false;
       }
     } catch (e) {
       showToast('Network error: ' + e.message, 'error');
-      if (onError) onError(e);
       return false;
     }
   }
 
-  async function fetchCategories({ id = null, limit = 100, offset = 0, q = '', onSuccess, onError } = {}) {
-    const params = new URLSearchParams();
-    if (id !== null) params.set('id', String(id));
-    if (limit) params.set('limit', String(limit));
-    if (offset) params.set('offset', String(offset));
-    if (q) params.set('q', q);
-    const url = '../actions/fetch_category_action.php?' + params.toString();
-
-    try {
-      const res = await doFetch(url, { method: 'GET' });
-      if (res.json) {
-        if (res.json.success) {
-          if (onSuccess) onSuccess(res.json.data || []);
-          return res.json.data || [];
-        } else {
-          showToast(res.json.message || 'Failed to fetch categories', 'error');
-          if (onError) onError(res.json);
-          return [];
-        }
-      }
-
-      if (res.ok) {
-        // if non-json but ok, attempt naive HTML parse? return text
-        if (onSuccess) onSuccess(res.text);
-        return res.text;
-      }
-
-      showToast('Failed to fetch categories', 'error');
-      if (onError) onError(res);
-      return [];
-    } catch (e) {
-      showToast('Network error: ' + e.message, 'error');
-      if (onError) onError(e);
-      return [];
-    }
-  }
-
-  async function updateCategory({ id, name, onSuccess, onError }) {
+  async function updateCategory({ id, name }) {
     const vId = validateId(id);
     if (!vId.ok) {
       showToast(vId.reason, 'error');
-      if (onError) onError(vId.reason);
       return false;
     }
     const v = validateCategoryName(name);
     if (!v.ok) {
       showToast(v.reason, 'error');
-      if (onError) onError(v.reason);
       return false;
     }
-
     const form = new FormData();
     form.append('category_id', String(vId.value));
     form.append('category_name', v.value);
-
     try {
       const res = await doFetch('../actions/update_category_action.php', { method: 'POST', body: form });
-      if (res.json) {
-        if (res.json.success) {
-          showToast(res.json.message || 'Category updated', 'success');
-          if (onSuccess) onSuccess(res.json);
-          return res.json;
-        } else {
-          showToast(res.json.message || 'Failed to update category', 'error');
-          if (onError) onError(res.json);
-          return res.json;
-        }
-      }
-
-      if (res.ok) {
-        showToast('Category updated', 'success');
-        if (onSuccess) onSuccess(res);
+      if (res.json && res.json.status === 'success') {
+        showToast(res.json.message || 'Category updated', 'success');
+        await refreshCategoryList();
         return true;
+      } else {
+        showToast((res.json && res.json.message) || 'Failed to update category', 'error');
+        return false;
       }
-
-      showToast('Failed to update category', 'error');
-      if (onError) onError(res);
-      return false;
     } catch (e) {
       showToast('Network error: ' + e.message, 'error');
-      if (onError) onError(e);
       return false;
     }
   }
 
-  async function deleteCategory({ id, onSuccess, onError }) {
+  async function deleteCategory({ id }) {
     const vId = validateId(id);
     if (!vId.ok) {
       showToast(vId.reason, 'error');
-      if (onError) onError(vId.reason);
       return false;
     }
-
     const form = new FormData();
     form.append('category_id', String(vId.value));
-
     try {
       const res = await doFetch('../actions/delete_category_action.php', { method: 'POST', body: form });
-
-      if (res.json) {
-        if (res.json.success) {
-          showToast(res.json.message || 'Category deleted', 'success');
-          if (onSuccess) onSuccess(res.json);
-          return res.json;
-        } else {
-          showToast(res.json.message || 'Failed to delete category', 'error');
-          if (onError) onError(res.json);
-          return res.json;
-        }
-      }
-
-      if (res.ok) {
-        showToast('Category deleted', 'success');
-        if (onSuccess) onSuccess(res);
+      if (res.json && res.json.status === 'success') {
+        showToast(res.json.message || 'Category deleted', 'success');
+        await refreshCategoryList();
         return true;
+      } else {
+        showToast((res.json && res.json.message) || 'Failed to delete category', 'error');
+        return false;
       }
-
-      showToast('Failed to delete category', 'error');
-      if (onError) onError(res);
-      return false;
     } catch (e) {
       showToast('Network error: ' + e.message, 'error');
-      if (onError) onError(e);
       return false;
     }
   }
@@ -302,14 +242,14 @@ Usage examples (at bottom) show how to bind forms/buttons.
       ev.preventDefault();
       const input = form.querySelector('input[name="category_name"]');
       if (!input) return showToast('Category input not found', 'error');
-      await addCategory({ name: input.value, onSuccess: () => { form.reset(); } });
+      await addCategory({ name: input.value, formEl: form });
     });
   }
 
   function wireEditForm(selector) {
-    const form = document.querySelector(selector);
-    if (!form) return;
-    form.addEventListener('submit', async (ev) => {
+    document.addEventListener('submit', async (ev) => {
+      const form = ev.target.closest(selector);
+      if (!form) return;
       ev.preventDefault();
       const idEl = form.querySelector('input[name="category_id"]');
       const nameEl = form.querySelector('input[name="category_name"]');
@@ -319,29 +259,22 @@ Usage examples (at bottom) show how to bind forms/buttons.
   }
 
   function wireDeleteButtons(selector) {
-    // expects buttons with data-id attribute
     document.addEventListener('click', (ev) => {
       const btn = ev.target.closest(selector);
       if (!btn) return;
       const id = btn.dataset.id;
       if (!id) return showToast('Missing category id', 'error');
-
-      // confirmation
       if (!confirm('Are you sure you want to delete this category? This cannot be undone.')) return;
-      deleteCategory({ id, onSuccess: () => {
-        // optionally remove the row from DOM if the button sits in a row
-        const row = btn.closest('.user-item, .category-row, tr');
-        if (row) row.remove();
-      }});
+      deleteCategory({ id });
     });
   }
 
   // Expose public API
   window.CategoryAPI = {
     addCategory,
-    fetchCategories,
     updateCategory,
     deleteCategory,
+    refreshCategoryList,
     wireAddForm,
     wireEditForm,
     wireDeleteButtons,
@@ -350,9 +283,9 @@ Usage examples (at bottom) show how to bind forms/buttons.
 
   // Auto-wire common selectors if present on page
   document.addEventListener('DOMContentLoaded', () => {
-    // example form names used in your current HTML
     CategoryAPI.wireAddForm('form.collection-form');
     CategoryAPI.wireEditForm('form.edit-category-form');
     CategoryAPI.wireDeleteButtons('button[data-action="delete-category"]');
+    CategoryAPI.refreshCategoryList();
   });
 })();
