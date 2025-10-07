@@ -21,7 +21,7 @@ require_once '../controllers/category_controller.php';
     <!-- Fonts & icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <script src="../assets/js/category.js"></script>
+    <!-- <script src="../assets/js/category.js"></script> -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet" />
 
@@ -231,6 +231,10 @@ require_once '../controllers/category_controller.php';
         body { padding: 12px; }
         .card { padding: 18px; }
         .collection-input, .create-btn { font-size:14px; padding:12px }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .modal { background: #fff; box-shadow: 0 12px 40px rgba(0,0,0,0.25); border-radius: 12px; padding: 20px; }
+    .modal-overlay[hidden] { display: none !important; }
       }
     </style>
   </head>
@@ -239,7 +243,7 @@ require_once '../controllers/category_controller.php';
     <div class="app">
       <!-- Top bar -->
       <div class="topbar">
-        <a href="index.php" class="back-btn" aria-label="Back to dashboard">
+        <a href="../index.php" class="back-btn" aria-label="Back to dashboard">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -328,16 +332,17 @@ require_once '../controllers/category_controller.php';
         echo '<p class="small"><strong>Name:</strong> '.htmlspecialchars($cat['cat_name']).'</p>';
         echo '</div>';
         echo '<div class="user-actions">';
-        echo '<form method="post" style="display:inline;"><input type="hidden" name="delete_id" value="'.htmlspecialchars($cat['cat_id']).'"><button class="action-button secondary" type="submit" title="Delete">Delete</button></form>';
+        // JS-interceptable delete button (non-submitting)
+        echo '<button class="action-button secondary js-delete" type="button" data-id="'.htmlspecialchars($cat['cat_id']).'" title="Delete">Delete</button>';
         echo '<form method="post" style="display:inline;"><input type="hidden" name="update_id" value="'.htmlspecialchars($cat['cat_id']).'"><input type="text" name="update_name" value="'.htmlspecialchars($cat['cat_name']).'" required><button class="action-button" type="submit" title="Update">Update</button></form>';
         echo '</div>';
         echo '</div>';
       }
       // Handle delete
-      if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
-        delete_category_ctr((int)$_POST['delete_id']);
-        echo '<script>window.location.reload();</script>';
-      }
+      // if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+      //   delete_category_ctr((int)$_POST['delete_id']);
+      //   echo '<script>window.location.reload();</script>';
+      // }
       // Handle update
       if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_id'], $_POST['update_name'])) {
         edit_category_ctr((int)$_POST['update_id'], $_POST['update_name']);
@@ -348,5 +353,21 @@ require_once '../controllers/category_controller.php';
         </div>
       </div>
     </div>
+    <!-- ...rest of your HTML... -->
+  <div class="modal-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" style="display:none;">
+    <div class="modal" role="document" style="max-width:520px;border-radius:12px;padding:20px;">
+      <h3 id="confirmTitle" style="margin:0 0 8px;color:#a33;">Confirm delete</h3>
+      <div id="confirmItem" style="font-size:13px;color:#666;margin-bottom:8px">Category: —</div>
+      <p style="margin:0 0 16px;color:#444">This action cannot be undone. The category will be permanently removed.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button id="cancelBtn" class="action-button secondary" type="button">Cancel</button>
+        <button id="confirmBtn" class="action-button" type="button" style="background:linear-gradient(90deg,#ff8f77,#ffb7a7);color:#4b0a00">Delete</button>
+      </div>
+    </div>
+  </div>
+  <!-- Place your JS after the modal -->
+  <script src="../assets/js/category.js"></script>
+  </body>
+  </html>
   </body>
 </html>

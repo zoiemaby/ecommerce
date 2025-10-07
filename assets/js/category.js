@@ -132,11 +132,10 @@ Usage examples (at bottom) show how to bind forms/buttons.
           div.className = 'user-item';
           div.innerHTML = `
             <div class="user-details">
-              <p><strong>ID:</strong> ${cat.cat_id}</p>
               <p class="small"><strong>Name:</strong> ${cat.cat_name}</p>
             </div>
             <div class="user-actions">
-              <button class="action-button secondary" data-action="delete-category" data-id="${cat.cat_id}" title="Delete">Delete</button>
+              <button class="action-button secondary js-delete" data-id="${cat.cat_id}" title="Delete">Delete</button>
               <form class="edit-category-form" style="display:inline;">
                 <input type="hidden" name="category_id" value="${cat.cat_id}">
                 <input type="text" name="category_name" value="${cat.cat_name}" required>
@@ -259,14 +258,66 @@ Usage examples (at bottom) show how to bind forms/buttons.
   }
 
   function wireDeleteButtons(selector) {
+    // Modal elements (assumes modal HTML exists on page)
+    const overlay = document.getElementById('confirmOverlay');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const confirmItem = document.getElementById('confirmItem');
+
+    let pendingId = null; // id to delete
+
+    // function to open modal and set text
+    function openModal(id, name) {
+      pendingId = id;
+      confirmItem.textContent = `Category: ${name} (ID: ${id})`;
+      // ensure overlay visible
+      overlay.style.display = 'flex';
+      cancelBtn.focus();
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      overlay.style.display = 'none';
+      pendingId = null;
+      document.body.style.overflow = '';
+    }
+
+    // listen for clicks on delete buttons
     document.addEventListener('click', (ev) => {
       const btn = ev.target.closest(selector);
       if (!btn) return;
+      ev.preventDefault();
       const id = btn.dataset.id;
-      if (!id) return showToast('Missing category id', 'error');
-      if (!confirm('Are you sure you want to delete this category? This cannot be undone.')) return;
-      deleteCategory({ id });
+      if (!id) { showToast('Missing category id', 'error'); return; }
+
+      // try to get the category name from the row (optional)
+      let name = '—';
+      const row = btn.closest('.user-item');
+      if (row) {
+        const nameEl = row.querySelector('.user-details .small') || row.querySelector('.user-details p');
+        if (nameEl) name = nameEl.textContent.replace(/^Name:?\s*/i,'').trim();
+      }
+
+      // open custom modal instead of native confirm
+      openModal(id, name);
     });
+
+    // Confirm button in modal calls the deleteCategory function
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', async () => {
+        if (!pendingId) { closeModal(); return; }
+        await deleteCategory({ id: pendingId });
+        closeModal();
+      });
+    }
+
+    // Cancel behavior
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    // Close on overlay click or ESC
+    if (overlay) {
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.style.display === 'flex') closeModal(); });
+    }
   }
 
   // Expose public API
@@ -285,7 +336,7 @@ Usage examples (at bottom) show how to bind forms/buttons.
   document.addEventListener('DOMContentLoaded', () => {
     CategoryAPI.wireAddForm('form.collection-form');
     CategoryAPI.wireEditForm('form.edit-category-form');
-    CategoryAPI.wireDeleteButtons('button[data-action="delete-category"]');
+    CategoryAPI.wireDeleteButtons('.js-delete');
     CategoryAPI.refreshCategoryList();
   });
 })();

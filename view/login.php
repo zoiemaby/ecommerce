@@ -104,7 +104,7 @@
     .loader {
       border: 3px solid #f3f3f3;
       border-radius: 50%;
-      border-top: 3px solid currentColor;
+      border-top: 3px solid #16a34a;
       width: 16px;
       height: 16px;
       animation: spin 1s linear infinite;

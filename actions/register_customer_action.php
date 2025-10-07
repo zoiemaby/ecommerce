@@ -84,3 +84,4 @@ try {
 } catch (Throwable $e) {
     respond('error', 'Exception: ' . $e->getMessage());
 }
+?>

@@ -179,7 +179,7 @@ label {
 </head>
 <body>
   <div class="wrapper">
-    <form id="signUpForm" action="../actions/register_customer_action.php" method="post" novalidate>
+    <form id="registerForm" action="../actions/register_customer_action.php" method="post" novalidate>
       <h1>Sign Up</h1>
 
       <!-- Single Name field -->
@@ -253,7 +253,13 @@ label {
         </div>
     </div>
 
-      <button type="submit" class="btn">Sign Up</button>
+      <button type="submit" class="btn">
+        <span id="registerBtnText">Register</span>
+        <span class="loader" id="registerLoader" style="display:none;"></span>
+      </button>
+
+      <div class="server-message error" id="registerError" style="display:none;"></div>
+      <div class="server-message success" id="registerSuccess" style="display:none;"></div>
 
       <div class="register-link">
         <p>Already have an account? <a href="login.php">Login</a></p>
@@ -368,7 +374,7 @@ label {
         });
       }
 
-      document.getElementById("signUpForm").addEventListener("submit", function(event) {
+      document.getElementById("registerForm").addEventListener("submit", function(event) {
         document.querySelectorAll('.error-message').forEach(e => e.style.display = 'none');
         updateHiddenPhoneFields();
 
